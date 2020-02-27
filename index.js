@@ -15,7 +15,7 @@ app.get('/api/scheduled-sessions/:scheduledSessionId', (req, res, next) => {
    res.send(`schedulesSessionIdEntered: ${id}`);
 });
 
-app.get('/api/session-series/sessionSeriesId', (req, res, next) => {
+app.get('/api/session-series/:sessionSeriesId', (req, res, next) => {
    const id = req.params.sessionSeriesId;
    res.send(`sessionSeriesIdEntered: ${id}`);
 });
