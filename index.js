@@ -46,7 +46,7 @@ async function setup() {
 	 res.status(404).send(`An error has occurred - there is no session series with id ${id}`);
    });
 
-   app.get('/api/updateAll', async (req, res, next) => {
+   app.get('/api/update-all', async (req, res, next) => {
       const sessionSeries = updateFromUrl('https://opendata.exercise-anywhere.com/api/rpde/session-series');
       const scheduledSessions = updateFromUrl('https://opendata.exercise-anywhere.com/api/rpde/scheduled-sessions');
       
