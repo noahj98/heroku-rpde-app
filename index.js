@@ -47,6 +47,7 @@ async function setup() {
    });
 
    app.get('/api/update-all', async (req, res, next) => {
+      await dropAndRecreateTableSchema();
       const sessionSeries = updateFromUrl('https://opendata.exercise-anywhere.com/api/rpde/session-series');
       const scheduledSessions = updateFromUrl('https://opendata.exercise-anywhere.com/api/rpde/scheduled-sessions');
       
