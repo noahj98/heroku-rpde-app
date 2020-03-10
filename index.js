@@ -72,7 +72,7 @@ async function setup() {
       //.catch(err => res.status(500).send('An error has occurred'));
    }, getKindFromDB);
 
-   async function getKindFromDB(req, res, next) => {
+   async function getKindFromDB(req, res, next) {
       client.query('SELECT * FROM Item I WHERE I.kind=$1', [res.locals.kind])
 	 .then(data => res.send(data.rows.map(item => item.id)))
 	 .catch(err => res.status(500).send('An internal server error has occurred'));
