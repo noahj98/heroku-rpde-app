@@ -29,7 +29,7 @@ const PORT = process.env.PORT || 5000;
  */
 
 const client = new Client({
-   connectionString: process.env.DATABASE_URL || 'postgres://pylsifcdfthvis:345ce853381e034d447b00614a42d39399c06441b49c10fb9bb4cd39251c1c32@ec2-50-17-178-87.compute-1.amazonaws.com:5432/d587fbp61eu131',
+   connectionString: process.env.DATABASE_URL, //|| 'postgres://pylsifcdfthvis:345ce853381e034d447b00614a42d39399c06441b49c10fb9bb4cd39251c1c32@ec2-50-17-178-87.compute-1.amazonaws.com:5432/d587fbp61eu131',
    ssl: true,
 });
 
@@ -115,9 +115,6 @@ async function setup() {
 	    const session = qry.rows[0];
 	    if (session) {
 	       id = 'https://opendata.exercise-anywhere.com/' + id;
-	       //we already know id
-	       //now query db for all items where of kind scheduled-session with same parentid
-	       //need to change schema to make this work - sql wont be able to access json (data.superEvent)
 	       const qry2 = await client.query(`SELECT * FROM Item I WHERE I.kind=$1 AND I.data ->> 'superEvent'=$2`, ['ScheduledSession', id]);
 	       const item = session.data;
 	       item.subEvent = qry2.rows;
