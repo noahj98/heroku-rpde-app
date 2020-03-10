@@ -119,8 +119,9 @@ async function setup() {
 	       //now query db for all items where of kind scheduled-session with same parentid
 	       //need to change schema to make this work - sql wont be able to access json (data.superEvent)
 	       const qry2 = await client.query(`SELECT * FROM Item I WHERE I.kind=$1 AND I.data ->> 'superEvent'=$2`, ['ScheduledSession', id]);
-	       res.send(qry2.rows);
-	       //res.send(session.data);
+	       const item = session.data;
+	       item.subEvent = qry2.rows;
+	       res.send(item);
 	    } else
 	       res.status(404).send(`An error has occurred - there is no session series with id ${id}`);
 	 }).catch(err => {
