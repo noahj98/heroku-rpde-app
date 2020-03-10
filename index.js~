@@ -4,7 +4,7 @@ const { Client } = require('pg');
 const format = require('pg-format');
 const axios = require('axios');
 const PORT = process.env.PORT || 5000;
-//hi
+
 const client = new Client({
    connectionString: 'postgres://pylsifcdfthvis:345ce853381e034d447b00614a42d39399c06441b49c10fb9bb4cd39251c1c32@ec2-50-17-178-87.compute-1.amazonaws.com:5432/d587fbp61eu131',
    ssl: true,
