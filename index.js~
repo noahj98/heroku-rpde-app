@@ -5,13 +5,36 @@ const format = require('pg-format');
 const axios = require('axios');
 const PORT = process.env.PORT || 5000;
 
+/*
+ * Customer requirement 1:
+ *    There's a rate limit on the RPDE feed - one every five seconds max
+ *
+ * Infra requirement 1:
+ *    Heroku Scheduler must be used for cron jobs
+ *
+ * Customer requirement 2:
+ *    We only want to see valid items
+ *
+ * Infra requirement 2:
+ *    RabbitMQ must be used to create a data pipeline
+ *
+ * Break RPDE pages into items and then publish each item to RabbitMQ so that it can be consumed by the 1st RabbitMQ consumer
+ *
+ * Need 2 RabbitMQ consumers:
+ *    1: Validate. This uses https://github.com/openactive/data-model-validator to check each item for conformance to the Modelling Spec
+ *	 Items that have validation errors should be stored to an "errors" table in the db
+ *	 Create a route that returns ALL the errant IDs along with error messages
+ *	 Items that pass validation can be send to a queue to be consumed by the persister
+ *    2: Persist. This stores items in PostgreSQL. Only valid items should be sent here to be persisted
+ */
+
 const client = new Client({
-   connectionString: 'postgres://pylsifcdfthvis:345ce853381e034d447b00614a42d39399c06441b49c10fb9bb4cd39251c1c32@ec2-50-17-178-87.compute-1.amazonaws.com:5432/d587fbp61eu131',
+   connectionString: process.env.DATABASE_URL || 'postgres://pylsifcdfthvis:345ce853381e034d447b00614a42d39399c06441b49c10fb9bb4cd39251c1c32@ec2-50-17-178-87.compute-1.amazonaws.com:5432/d587fbp61eu131',
    ssl: true,
 });
 
-const sessionSeriesUrl = 'https://opendata.exercise-anywhere.com/api/rpde/session-series';
-const scheduledSessionsUrl = 'https://opendata.exercise-anywhere.com/api/rpde/scheduled-sessions';
+//const sessionSeriesUrl = 'https://opendata.exercise-anywhere.com/api/rpde/session-series';
+//const scheduledSessionsUrl = 'https://opendata.exercise-anywhere.com/api/rpde/scheduled-sessions';
 
 async function setup() {
 
@@ -26,19 +49,35 @@ async function setup() {
       .set('view engine', 'ejs')
       .get('/', (req, res) => res.render('pages/index'));
 
+   /*
+    * Queries PostgreSQL database for all scheduled sessions
+    * Returns list of all ids
+    */
    app.get('/api/scheduled-sessions', async (req, res, next) => {
-      //query for all scheduled sessions and return ids
-      client.query('SELECT * FROM Item I WHERE I.kind=$1', ['ScheduledSession'])
-      .then(data => res.send(data.rows.map(item => item.id)))
-      .catch(err => res.status(500).send('An error has occurred'));
-   });
+      res.locals.kind = 'ScheduledSession';
+      next();
+      //client.query('SELECT * FROM Item I WHERE I.kind=$1', ['ScheduledSession'])
+      //.then(data => res.send(data.rows.map(item => item.id)))
+      //.catch(err => res.status(500).send('An internal server error has occurred'));
+   }, getKindFromDB);
 
+   /*
+    * Queries PostgreSQL database for all session series
+    * Returns list of all ids
+    */
    app.get('/api/session-series', async (req, res, next) => {
-      //query for all session series and return ids
-      client.query('SELECT * FROM Item I WHERE I.kind=$1', ['SessionSeries'])
-      .then(data => res.send(data.rows.map(item => item.id)))
-      .catch(err => res.status(500).send('An error has occurred'));
-   });
+      res.locals.kind = 'SessionSeries';
+      next();
+      //client.query('SELECT * FROM Item I WHERE I.kind=$1', ['SessionSeries'])
+      //.then(data => res.send(data.rows.map(item => item.id)))
+      //.catch(err => res.status(500).send('An error has occurred'));
+   }, getKindFromDB);
+
+   async function getKindFromDB(req, res, next) => {
+      client.query('SELECT * FROM Item I WHERE I.kind=$1', [res.locals.kind])
+	 .then(data => res.send(data.rows.map(item => item.id)))
+	 .catch(err => res.status(500).send('An internal server error has occurred'));
+   }
 
    app.get('/api/scheduled-sessions/:scheduledSessionId', async (req, res, next) => {
       try {

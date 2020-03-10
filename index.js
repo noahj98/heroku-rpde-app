@@ -39,7 +39,6 @@ const client = new Client({
 async function setup() {
 
    await client.connect();
-   await dropAndRecreateTableSchema();
 
    const app = express();
 
@@ -109,7 +108,7 @@ async function setup() {
       else
 	 res.status(404).send(`An error has occurred - there is no session series with id ${id}`);
    });
-
+/*
    app.get('/api/update-all', async (req, res, next) => {
       await dropAndRecreateTableSchema();
       const sessionSeries = updateFromUrl(sessionSeriesUrl);
@@ -124,12 +123,12 @@ async function setup() {
 	 console.log(err);
       }
    });
-
+*/
    app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
 }
 
 setup();
-
+/*
 async function dropAndRecreateTableSchema() {
    await client.query('DROP TABLE IF EXISTS Item')
       .catch(err => {
@@ -143,7 +142,8 @@ async function dropAndRecreateTableSchema() {
       throw err;
    });
 }
-
+*/
+/*
 async function updateFromUrl(url) {
    //make this a loop such that it keeps getting from the url until response is empty
    //need to be careful about deletes - need to alter query to deal with them
@@ -175,6 +175,7 @@ async function updateFromUrl(url) {
 	 });
    }
 }
+*/
 
 async function getItemFromClient(id, kind) {
    return client.query('SELECT * FROM Item I WHERE I.id=$1 AND I.kind=$2', [id, kind]);
