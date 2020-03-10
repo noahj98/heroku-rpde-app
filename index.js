@@ -82,7 +82,7 @@ async function setup() {
       //change such that query returns both? rather than two queries?
       const id = req.params.scheduleSessionId;
       getItemFromClient(id, 'ScheduledSession')
-	 .then(qry => {
+	 .then(async qry => {
 	    const session = qry.rows[0];
 	    if (session) {
 	       //now query for parent - edge case where parent DNE either because i have not added it or it has been deleted
@@ -105,7 +105,7 @@ async function setup() {
    app.get('/api/session-series/:sessionSeriesId', async (req, res, next) => {
       const id = req.params.sessionSeriesId;
       getItemFromClient(id, 'SessionSeries')
-	 .then(qry => {
+	 .then(async qry => {
 	    const session = qry.rows[0];
 	    if (session) 
 	       res.send(session.data);
