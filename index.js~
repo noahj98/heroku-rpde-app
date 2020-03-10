@@ -70,7 +70,10 @@ async function setup() {
    async function getKindFromDB(req, res, next) {
       client.query('SELECT * FROM Item I WHERE I.kind=$1', [res.locals.kind])
 	 .then(data => res.send(data.rows.map(item => item.id)))
-	 .catch(err => res.status(500).send('An internal server error has occurred'));
+	 .catch(err => {
+	    console.log(err);
+	    res.status(500).send('An internal server error has occurred');
+	 });
    }
 
    /*
@@ -93,7 +96,10 @@ async function setup() {
 	       res.send(session.data);
 	    } else
 	       res.status(404).send(`An error has occurred - there is no scheduled session with id ${id}`);
-	 }).catch(err => res.status(500).send('An internal server error has occurred'));
+	 }).catch(err => {
+	    console.log(err);
+	    res.status(500).send('An internal server error has occurred');
+	 });
    });
 
    /* Queried PostgreSQL database for session series with requested id
@@ -107,11 +113,19 @@ async function setup() {
       getItemFromClient(id, 'SessionSeries')
 	 .then(async qry => {
 	    const session = qry.rows[0];
-	    if (session) 
-	       res.send(session.data);
-	    else
+	    if (session) {
+	       id = 'https://opendata.exercise-anywhere.com/' + id;
+	       //we already know id
+	       //now query db for all items where of kind scheduled-session with same parentid
+	       const qry2 = await client.query('SELECT * FROM Item I WHERE I.kind=$1 AND I.data.superEvent=$2', ['ScheduledSession', id]);
+	       res.send(qry2.rows);
+	       //res.send(session.data);
+	    } else
 	       res.status(404).send(`An error has occurred - there is no session series with id ${id}`);
-	 }).catch(err => res.status(500).send('An internal error has occurred'));
+	 }).catch(err => {
+	    console.log(err);
+	    res.status(500).send('An internal server error has occurred');
+	 });
    });
 
    app.listen(PORT, () => console.log(`Listening on ${ PORT }`));

@@ -109,7 +109,7 @@ async function setup() {
     * Doesn't actually do this yet, though
     */
    app.get('/api/session-series/:sessionSeriesId', async (req, res, next) => {
-      const id = req.params.sessionSeriesId;
+      let id = req.params.sessionSeriesId;
       getItemFromClient(id, 'SessionSeries')
 	 .then(async qry => {
 	    const session = qry.rows[0];
