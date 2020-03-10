@@ -33,9 +33,6 @@ const client = new Client({
    ssl: true,
 });
 
-//const sessionSeriesUrl = 'https://opendata.exercise-anywhere.com/api/rpde/session-series';
-//const scheduledSessionsUrl = 'https://opendata.exercise-anywhere.com/api/rpde/scheduled-sessions';
-
 async function setup() {
 
    await client.connect();
@@ -55,9 +52,6 @@ async function setup() {
    app.get('/api/scheduled-sessions', async (req, res, next) => {
       res.locals.kind = 'ScheduledSession';
       next();
-      //client.query('SELECT * FROM Item I WHERE I.kind=$1', ['ScheduledSession'])
-      //.then(data => res.send(data.rows.map(item => item.id)))
-      //.catch(err => res.status(500).send('An internal server error has occurred'));
    }, getKindFromDB);
 
    /*
@@ -67,115 +61,63 @@ async function setup() {
    app.get('/api/session-series', async (req, res, next) => {
       res.locals.kind = 'SessionSeries';
       next();
-      //client.query('SELECT * FROM Item I WHERE I.kind=$1', ['SessionSeries'])
-      //.then(data => res.send(data.rows.map(item => item.id)))
-      //.catch(err => res.status(500).send('An error has occurred'));
    }, getKindFromDB);
 
+   /*
+    * Queries PostgreSQL database for all Items of some Item.kind
+    * returns the Item.id of all returned Items
+    */
    async function getKindFromDB(req, res, next) {
       client.query('SELECT * FROM Item I WHERE I.kind=$1', [res.locals.kind])
 	 .then(data => res.send(data.rows.map(item => item.id)))
 	 .catch(err => res.status(500).send('An internal server error has occurred'));
    }
 
+   /*
+    * Queries PostgreSQL database for scheduled session with requested id
+    * Retrieves parentId from returned data, then queries PostgreSQL database for session series with parent id
+    * Merges and returns data
+    */
    app.get('/api/scheduled-sessions/:scheduledSessionId', async (req, res, next) => {
-      try {
-      const id = req.params.scheduledSessionId;
-      const qry = await getItemFromClient(id, 'ScheduledSession');
-      const session = qry.rows[0];
-
-      if (session) {
-	 //now query for parent - edge case where parent DNE either because i have not added it or it has been deleted
-	 //and scheduled session should be deleted but has not been updated
-	 const parentId = String(session.data.superEvent).match(/\.com\/(.*)/)[1];
-	 const qry2 = await getItemFromClient(parentId, 'SessionSeries');
-	 session.data.superEvent = qry2.rows[0].data;
-	 res.send(session.data);
-      } else
-	 res.status(404).send(`An error has occurred - there is no scheduled session with id ${id}`);
-      } catch (err) {
-	 console.log(err);
-	 res.status(500).send('An internal server error has occurred');
-      }
+      //change such that query returns both? rather than two queries?
+      const id = req.params.scheduleSessionId;
+      getItemFromClient(id, 'ScheduledSession')
+	 .then(qry => {
+	    const session = qry.rows[0];
+	    if (session) {
+	       //now query for parent - edge case where parent DNE either because i have not added it or it has been deleted
+	       //and scheduled session should be deleted but has not been updated
+	       const parentId = String(session.data.superEvent).match(/\.com\/(.*)/)[1];
+	       const qry2 = await getItemFromClient(parentId, 'SessionSeries');
+	       session.data.superEvent = qry2.rows[0].data;
+	       res.send(session.data);
+	    } else
+	       res.status(404).send(`An error has occurred - there is no scheduled session with id ${id}`);
+	 }).catch(err => res.status(500).send('An internal server error has occurred'));
    });
 
+   /* Queried PostgreSQL database for session series with requested id
+    * Retrieves [childID(s)] from returned data, then queried PostgreSQL database for scheduled sessions with childrens ids
+    * Merges and returns data
+    *
+    * Doesn't actually do this yet, though
+    */
    app.get('/api/session-series/:sessionSeriesId', async (req, res, next) => {
       const id = req.params.sessionSeriesId;
-      const qry = await getItemFromClient(id, 'SessionSeries');
-      const session = qry.rows[0];
-      if (session) 
-	 res.send(session.data);
-      else
-	 res.status(404).send(`An error has occurred - there is no session series with id ${id}`);
+      getItemFromClient(id, 'SessionSeries')
+	 .then(qry => {
+	    const session = qry.rows[0];
+	    if (session) 
+	       res.send(session.data);
+	    else
+	       res.status(404).send(`An error has occurred - there is no session series with id ${id}`);
+	 }).catch(err => res.status(500).send('An internal error has occurred'));
    });
-/*
-   app.get('/api/update-all', async (req, res, next) => {
-      await dropAndRecreateTableSchema();
-      const sessionSeries = updateFromUrl(sessionSeriesUrl);
-      const scheduledSessions = updateFromUrl(scheduledSessionsUrl);
-      //is it okay to do these simultaneously? brings me back to the semaphore days...
-      try {
-	 await Promise.all([sessionSeries, scheduledSessions]);
-	 const qry = await client.query('SELECT * FROM Item');
-	 res.send(qry.rows.map(item => [item.id, item.kind]));
-      } catch (err) {
-	 res.status(500).send('an error has occurred');
-	 console.log(err);
-      }
-   });
-*/
+
    app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
 }
 
 setup();
-/*
-async function dropAndRecreateTableSchema() {
-   await client.query('DROP TABLE IF EXISTS Item')
-      .catch(err => {
-	 throw err;
-      });
-   await client.query(`CREATE TABLE Item (
-      id text PRIMARY KEY,
-      kind text NOT NULL,
-      data jsonb NOT NULL
-   )`).catch(err => {
-      throw err;
-   });
-}
-*/
-/*
-async function updateFromUrl(url) {
-   //make this a loop such that it keeps getting from the url until response is empty
-   //need to be careful about deletes - need to alter query to deal with them
-   //filter deletes
-   for (let i = 0; i != -1;) {
-      await axios.get(url)
-	 .then(async sessions => {
-	    //table data and insert into table
-	    url = sessions.data.next;
-	    const items = sessions.data.items.map(item => [item.id, item.kind, item.data, item.state]); 
-	    //await format('INSERT INTO Item(id, kind, data) VALUES %L', items);
-	    
-	    if (items.length === 0) {
-	       i = -1;
-	       return;
-	    }
-	    let queries = [];
-	    const insert_qry = 'INSERT INTO Item(id, kind, data) VALUES ($1, $2, $3)';
-	    const remove_qry = 'DELETE FROM Item I WHERE I.id=$1';
-	    for (let item in items) {
-	       const cur = items[item];
-	       if (cur.pop() === 'deleted')
-		  queries.push(client.query(remove_qry, [cur[0]]));
-	       else
-		  queries.push(client.query(insert_qry, cur));
-	    }
-	    await Promise.all(queries);
-	    
-	 });
-   }
-}
-*/
 
 async function getItemFromClient(id, kind) {
    return client.query('SELECT * FROM Item I WHERE I.id=$1 AND I.kind=$2', [id, kind]);
