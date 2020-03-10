@@ -80,7 +80,7 @@ async function setup() {
     */
    app.get('/api/scheduled-sessions/:scheduledSessionId', async (req, res, next) => {
       //change such that query returns both? rather than two queries?
-      const id = req.params.scheduleSessionId;
+      const id = req.params.scheduledSessionId;
       getItemFromClient(id, 'ScheduledSession')
 	 .then(async qry => {
 	    const session = qry.rows[0];
