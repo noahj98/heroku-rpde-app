@@ -50,7 +50,7 @@ async function setup() {
 	 //now query for parent - edge case where parent DNE either because i have not added it or it has been deleted
 	 //and scheduled session should be deleted but has not been updated
 	 const parentId = String(session.data.superEvent).match(/\.com\/(.*)/)[1];
-	 const qry2 = await getItemFromclient(parentId, 'SessionSeries');
+	 const qry2 = await getItemFromClient(parentId, 'SessionSeries');
 	 session.data.superEvent = qry2.rows[0].data;
 	 res.send(session.data);
       } else
