@@ -117,7 +117,8 @@ async function setup() {
 	       id = 'https://opendata.exercise-anywhere.com/' + id;
 	       //we already know id
 	       //now query db for all items where of kind scheduled-session with same parentid
-	       const qry2 = await client.query('SELECT * FROM Item I WHERE I.kind=$1 AND I.data.superEvent=$2', ['ScheduledSession', id]);
+	       //need to change schema to make this work - sql wont be able to access json (data.superEvent)
+	       const qry2 = await client.query(`SELECT * FROM Item I WHERE I.kind=$1 AND I.data -> 'superEvent'=$2`, ['ScheduledSession', id]);
 	       res.send(qry2.rows);
 	       //res.send(session.data);
 	    } else
