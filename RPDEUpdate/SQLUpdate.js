@@ -41,6 +41,8 @@ async function startUpdatingSQL(client) {
 		  console.log(sessions.data.items);
 	       }
 	       const items = sessions.data.items.map(item => [item.id, item.kind, item.data, item.state]);
+	    })
+	    .catch(console.warn);
       }
    }, 5000);
 }
