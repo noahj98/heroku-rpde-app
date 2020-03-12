@@ -1,0 +1,15 @@
+const amqp = require('amqplib/callback_api');
+
+amqp.connect('', (err0, conn) => {
+   if (err0) throw err0;
+
+   conn.createChannel((err1, channel) => {
+      if (err1) throw err1;
+
+      let queue = 'hello'; //some queue name
+
+      channel.assertQueue(queue, {
+	 durable: false
+      });
+   });
+});
