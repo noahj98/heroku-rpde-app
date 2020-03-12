@@ -3,12 +3,13 @@ const format = require('pg-format');
 const axios = require('axios');
 const PORT = process.env.PORT || 5000;
 
-let tmp = true;
-
 const urls = [
    'https://opendata.exercise-anywhere.com/api/rpde/session-series',
    'https://opendata.exercise-anywhere.com/api/rpde/scheduled-sessions'
 ];
+
+const INSERT_QUERY = 'INSERT INTO Item(id, kind, data) VALUES ($1, $2, $3)';
+const REMOVE_QUERY = 'DELETE FROM Item I WHERE I.id=$1';
 
 async function startUpdatingSQL(client) {
    await client.query('DROP TABLE IF EXISTS Item')
@@ -31,16 +32,20 @@ async function startUpdatingSQL(client) {
       //update URLs
       //update SQL
       //at some point test for invalid entries to send to another sql table
-      
+      const queries = [];
       for (let i in urls) {
 	 axios.get(urls[i])
 	    .then(async sessions => {
 	       urls[i] = sessions.data.next;
-	       if (tmp) {
-		  tmp = false;
-		  console.log(sessions.data.items);
+	       const items = sessions.data.items.map(item => [item.id, item.kind, item.data, item.state]); //removes timestamp
+	       for (let item in items) {
+		  const curr = items[item];
+		  if (curr.pop() === 'deleted')
+		     queries.push(client.query(remove_qry, [curr[0]])); //remove query with item.id
+		  else
+		     queries.push(client.query(insert_qry, cur)); //insert qry with item's id, kind, and data
 	       }
-	       const items = sessions.data.items.map(item => [item.id, item.kind, item.data, item.state]);
+	       Promise.all(queries).catch(console.warn);
 	    })
 	    .catch(console.warn);
       }

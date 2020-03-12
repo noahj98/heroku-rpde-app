@@ -41,9 +41,9 @@ async function startUpdatingSQL(client) {
 	       for (let item in items) {
 		  const curr = items[item];
 		  if (curr.pop() === 'deleted')
-		     queries.push(client.query(remove_qry, [curr[0]])); //remove query with item.id
+		     queries.push(client.query(REMOVE_QUERY, [curr[0]])); //remove query with item.id
 		  else
-		     queries.push(client.query(insert_qry, cur)); //insert qry with item's id, kind, and data
+		     queries.push(client.query(INSERT_QUERY, curr)); //insert qry with item's id, kind, and data
 	       }
 	       Promise.all(queries).catch(console.warn);
 	    })
