@@ -8,9 +8,7 @@ const client = new Client({
    ssl: true,
 });
 
-export default async function startUpdatingSQL() {
-   //maybe client should be sent in?
-   await client.connect();
+export default async function startUpdatingSQL(client) {
 
    /*
     * RPDE rate limited, Heroku scheduler only works in 10 minute intervals on the free tier

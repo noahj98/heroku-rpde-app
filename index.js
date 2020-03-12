@@ -3,7 +3,7 @@ const path = require('path');
 const { Client } = require('pg');
 const format = require('pg-format');
 const axios = require('axios');
-const startUpdatingSQL = require('./RPDEUpdate/SQLUpdate.js');
+const { startUpdatingSQL } = require('./RPDEUpdate/SQLUpdate.js');
 const PORT = process.env.PORT || 5000;
 
 /*
