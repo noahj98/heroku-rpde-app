@@ -5,7 +5,7 @@ const PORT = process.env.PORT || 5000;
 
 const tmp = true;
 
-const urls = [
+let urls = [
    'https://opendata.exercise-anywhere.com/api/rpde/session-series',
    'https://opendata.exercise-anywhere.com/api/rpde/scheduled-sessions'
 ];

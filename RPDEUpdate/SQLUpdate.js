@@ -3,9 +3,9 @@ const format = require('pg-format');
 const axios = require('axios');
 const PORT = process.env.PORT || 5000;
 
-const tmp = true;
+let tmp = true;
 
-let urls = [
+const urls = [
    'https://opendata.exercise-anywhere.com/api/rpde/session-series',
    'https://opendata.exercise-anywhere.com/api/rpde/scheduled-sessions'
 ];
