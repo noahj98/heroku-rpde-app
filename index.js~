@@ -3,9 +3,13 @@ const path = require('path');
 const { Client } = require('pg');
 const format = require('pg-format');
 const axios = require('axios');
+const startUpdatingSQL = require('./RPDEUpdate/');
 const PORT = process.env.PORT || 5000;
 
 /*
+ *
+ * TODO
+ *
  * Customer requirement 1:
  *    There's a rate limit on the RPDE feed - one every five seconds max
  *
