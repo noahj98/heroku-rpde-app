@@ -19,4 +19,4 @@ async function startUpdatingSQL(client) {
    }, 5000);
 }
 
-module.exports = startUpdatingSQL;
+module.exports = { startUpdatingSQL };
